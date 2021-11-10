@@ -1,26 +1,29 @@
 // Copyright (c) 2017 Franka Emika GmbH
 // Use of this source code is governed by the Apache-2.0 license, see LICENSE
+
+// Librerie standard
 #include <array>
 #include <cmath>
 #include <functional>
 #include <iostream>
 #include <vector>
+
+// Libreria Eigen Dense
 #include <Eigen/Dense>
 
+// Librerie Libfranka
 #include <franka/duration.h>
 #include <franka/exception.h>
 #include <franka/model.h>
 #include <franka/robot.h>
 
-#include "examples_common.h"
+// Contiene alcune definizioni di funzioni utili 
+#include "../examples/examples_common.h"
 
+#include "CustomLibraries/definitions.h"
 /**
- * @example cartesian_impedance_control.cpp
- * An example showing a simple cartesian impedance controller without inertia shaping
- * that renders a spring damper system where the equilibrium is the initial configuration.
- * After starting the controller try to push the robot around and try different stiffness levels.
- *
- * @warning collision thresholds are set to high values. Make sure you have the user stop at hand!
+ * Esempio programma C++ per il controllo in coppia del robot Panda.
+ * 
  */
 
 int main(int argc, char** argv) {
