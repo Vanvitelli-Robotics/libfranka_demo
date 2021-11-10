@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/vacuum_object.dir/vacuum_object.cpp.o  -o vacuum_object  -Wl,-rpath,/home/giulio/Desktop/Tirocinio/libfranka: libexamples_common.a ../libfranka.so.0.8.0 

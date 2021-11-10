@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/TorqueControlGeneric.dir/TorqueControlGeneric.cpp.o  -o TorqueControlGeneric  -Wl,-rpath,/home/giulio/Desktop/Tirocinio/libfranka ../libfranka.so.0.8.0 -lexamples_comm_lib 

@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/joint_point_to_point_motion.dir/joint_point_to_point_motion.cpp.o  -o joint_point_to_point_motion  -Wl,-rpath,/home/giulio/Desktop/Tirocinio/libfranka: libexamples_common.a ../libfranka.so.0.8.0 

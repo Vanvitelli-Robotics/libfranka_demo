@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.4)
+
 project(libfranka
   VERSION 0.8.0
   LANGUAGES CXX
@@ -154,16 +155,19 @@ macro(find_package)
   endif()
 endmacro()
 
-option(BUILD_TESTS "Build tests" ON)
+option(BUILD_TESTS "Build tests" OFF)
 if(BUILD_TESTS)
-  enable_testing()
-  add_subdirectory(test)
+  #enable_testing()
+  #add_subdirectory(test)
 endif()
 
 option(BUILD_EXAMPLES "Build example code" ON)
 if(BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
+
+# Legge CMakeList.txt contenuto in CustomPrograms e builda i file
+add_subdirectory(CustomPrograms)
 
 option(BUILD_DOCUMENTATION "Build documentation" OFF)
 if(BUILD_DOCUMENTATION)
