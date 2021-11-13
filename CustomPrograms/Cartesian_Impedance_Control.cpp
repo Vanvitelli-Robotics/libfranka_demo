@@ -7,6 +7,7 @@
 #include <functional>
 #include <iostream>
 #include <vector>
+#include <thread>
 
 // Libreria Eigen Dense
 #include <Eigen/Dense>
@@ -23,6 +24,11 @@
 // Header file con le dichiarazioni delle funzioni custom
 #include "CustomLibrary/FillBuffer.h"
 
+const int t_fin = 20; // 20 s
+const int fs = 1000; 
+
+double** buffer_7; 
+double** buffer_6;  
 
 /**
  * Esempio programma C++ per il controllo in coppia del robot Panda. 
@@ -30,9 +36,12 @@
  * E' stato realizzato un controllo di tipo PD con compensazione di gravità in cui la posa 
  * desiderata è pari alla posa iniziale del robot.
  * 
+ * Nota: l'orientamento è espresso in termini di quaternioni unitari.
  * Nota: il Panda Robot compensa da se le coppie gravitazionali e gli attriti quindi non è 
  * necessario compensare le coppie gravitazionali. Inoltre, l'esempio prevede la compensazione 
  * delle coppie di Coriolis e Centrifughe. 
+ * 
+ *
  * 
  * Struttura del codice:
  * 1. Setup del robot
@@ -46,14 +55,21 @@
  */
 
 
+
+
+
+
+
+
 int main(int argc, char** argv) {
 
   
-
     if (argc != 2) {
         std::cerr << "Specificare l'indirizzo IP del robot." << std::endl;
         return -1;
     }
+
+    
 
   // Controllo di cedevolezza attiva (PD + compensazione di gravità)
     const double rigidezza_translazionale{150.0};
@@ -76,7 +92,20 @@ int main(int argc, char** argv) {
 
       // Connessione al robot (inizializzazione variabile robot)
         franka::Robot robot(argv[1]);
+      
+
+      // Inizializzazione oggetto StateSaver per salvare su file
+        buffer_7 = new double*[fs * t_fin * 7];
+        buffer_6 = new double*[fs * t_fin * 6];
+
+        for(int i = 0; i< fs*t_fin*7; i++)
+            buffer_7[i] = new double[5]; // tau_m, q, dq, pose, pose_dot
         
+        for(int i = 0; i< fs*t_fin*7; i++)
+            buffer_7[i] = new double[6]; // error
+
+        
+
       // Set collision behavior (https://frankaemika.github.io/libfranka/classfranka_1_1Robot.html#a168e1214ac36d74ac64f894332b84534)
         robot.setCollisionBehavior({{100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0}},
                                 {{100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0}},
@@ -102,16 +131,24 @@ int main(int argc, char** argv) {
       // Estrazione dell'orientamento in forma di quaternione a partire dalla matrice di rotazione
         Eigen::Quaterniond orientation_d(initial_transform.linear());
 
+
+      // Variabile per tenere traccia del tempo trascorso
+
+        double time = 0.0;
+
       // Definizione della callback per il loop di controllo in coppia:
       // L'esempio definisce una lambda function ma nulla vieta di creare una funzione esterna. 
       
         std::function<franka::Torques(const franka::RobotState&, franka::Duration)>
         impedance_control_callback = [&](const franka::RobotState& robot_state,
-                                          franka::Duration /*duration*/) -> franka::Torques {
+                                          franka::Duration duration) -> franka::Torques {
 
       /** Inizio callback: durante il loop di controllo la callback viene eseguita con una frequenza
        * di 1Khz. La variabile robot_state viene aggiornata ogni loop con la funzione robot.readOnce() **/
 
+      // Update time.
+        time += duration.toSec();
+        
       // Calcolo delle coppie di Coriolis a partire dal modello dinamico e dallo stato del robot
         std::array<double, 7> coriolis_array = model.coriolis(robot_state);
 
@@ -125,15 +162,17 @@ int main(int argc, char** argv) {
         Eigen::Map<const Eigen::Matrix<double, 7, 1>> q(robot_state.q.data());
         Eigen::Map<const Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
 
+      
       // Estrazione di posizione e orientamento analoga alla precedente  
         Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
         Eigen::Vector3d position(transform.translation());
         Eigen::Quaterniond orientation(transform.linear());
-
+        
       // Calcolo errore in posizione:
         Eigen::Matrix<double, 6, 1> error;
         error.head(3) << position - position_d;
 
+      
       // Calcolo errore in orientamento:
         if (orientation_d.coeffs().dot(orientation.coeffs()) < 0.0) {
             // se il prodotto scalare tra i quaternioni è negativo si inverte
@@ -147,6 +186,7 @@ int main(int argc, char** argv) {
       // Riporto dell'errore in terna base
         error.tail(3) << -transform.linear() * error.tail(3);
 
+      
       // Costruzione delle coppie di controllo
         Eigen::VectorXd tau_task(7), tau_d(7);
 
@@ -154,26 +194,57 @@ int main(int argc, char** argv) {
       // L'errore è stato definito con il segno opposto quindi serve invertire i segni.
         tau_task << jacobian.transpose() * (-rigidezza * error - smorzamento * (jacobian * dq));
         
+        
+      // Salvataggio dei dati
+        Eigen::Matrix<double, 7, 1> tau_measured(robot_state.tau_J.data());
+
+
       // Compensazione delle coppie di Coriolis
         tau_d << tau_task + coriolis;
 
         std::array<double, 7> tau_d_array{};
         Eigen::VectorXd::Map(&tau_d_array[0], 7) = tau_d;
+
+        
+        //sv.wait_filler();
+        
+        if (time >= t_fin) {
+          franka::Torques tau_m = tau_d_array;
+          std::cout << std::endl << " Fine controllo" << std::endl;
+          return franka::MotionFinished(tau_m);
+        }      
         return tau_d_array;
         };
 
-      // start real-time control loop
-        std::cout << "WARNING: Collision thresholds are set to high values. ";
-                    
-        std::cin.ignore();
-
-      // Avvio del loop di controllo vero e proprio
+      
+      // Start del loop di controllo real-time
         robot.control(impedance_control_callback);
+
+
+      // Scrittura su file
+        // sv.scrivi_su_file();
+
+      // Free memory
+        for(int i = 0; i< fs*t_fin*7; i++)
+            delete[] buffer_7[i];
+        delete[] buffer_7;
+
+        for(int i = 0; i< fs*t_fin*6; i++)
+            delete[] buffer_6[i];
+        delete[] buffer_6;
+
+
+
+
 
       } catch (const franka::Exception& ex) {
           // print exception
           std::cout << ex.what() << std::endl;
       }
+
+
+      
+
 
       return 0;
 }
