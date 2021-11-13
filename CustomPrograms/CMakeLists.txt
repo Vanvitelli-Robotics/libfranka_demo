@@ -18,7 +18,7 @@ set(CUSTOMPROGRAMS
 
 EigenExamples
 #TorqueControlGeneric
-#Cartesian_Impedance_Control
+Cartesian_Impedance_Control
 
 # Programmi che vuoi compilare
 

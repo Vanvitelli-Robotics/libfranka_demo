@@ -22,10 +22,11 @@
 #include "../examples/examples_common.h"
 
 // Header file con le dichiarazioni delle funzioni custom
-#include "CustomLibrary/FillBuffer.h"
+#include "CustomLibrary/StateSaver.h"
 
 const int t_fin = 20; // 20 s
-const int fs = 1000; 
+const int fs = 1000; // 1 KHz
+const int ncampioni = t_fin*fs; 
 
 double** buffer_7; 
 double** buffer_6;  
@@ -54,11 +55,33 @@ double** buffer_6;
  * 
  */
 
+// Funzione per compattare posizione e quaternione sotto un unico vettore posa 7x1
+Eigen::Matrix<double,7,1> posquat2mat(const Eigen::Vector3d& position, const Eigen::Quaterniond quaternion){
+    
+    Eigen::Matrix<double,7,1> mat;
+    mat(0,0) = position(0);
+    mat(1,0) = position(1);
+    mat(2,0) = position(2);
+    mat(3,0) = quaternion.w();
+    mat(4,0) = quaternion.x();
+    mat(5,0) = quaternion.y();
+    mat(6,0) = quaternion.z();
+    
+    
+
+    return mat;
+}
 
 
+// Per utilizzare le variabili static della classe StateSaver serve istanziarle fuori dal main
+  double** StateSaver::buffer_6;
+  double** StateSaver::buffer_7; 
 
-
-
+  Eigen::Matrix<double, 6, 1> StateSaver::error;
+  Eigen::Matrix<double,7,1> StateSaver::tau_measured;
+  Eigen::Matrix<double,7,1> StateSaver::q;
+  Eigen::Matrix<double, 7, 1> StateSaver::qdot;
+  Eigen::Matrix<double, 7, 1> StateSaver::pose;
 
 
 int main(int argc, char** argv) {
@@ -104,7 +127,7 @@ int main(int argc, char** argv) {
         for(int i = 0; i< fs*t_fin*7; i++)
             buffer_7[i] = new double[6]; // error
 
-        
+        StateSaver sv;
 
       // Set collision behavior (https://frankaemika.github.io/libfranka/classfranka_1_1Robot.html#a168e1214ac36d74ac64f894332b84534)
         robot.setCollisionBehavior({{100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0}},
@@ -119,9 +142,6 @@ int main(int argc, char** argv) {
 
       // Lettura dello stato attuale del robot
         franka::RobotState initial_state = robot.readOnce();
-
-      // initial_state.O_T_EE è la matrice di trasformazione omogenea che descrive la posa 
-      // dell'organo terminale rispetto alla terna zero del robot. 
       
         Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(initial_state.O_T_EE.data()));
 
@@ -137,33 +157,29 @@ int main(int argc, char** argv) {
         double time = 0.0;
 
       // Definizione della callback per il loop di controllo in coppia:
-      // L'esempio definisce una lambda function ma nulla vieta di creare una funzione esterna. 
-      
+        
         std::function<franka::Torques(const franka::RobotState&, franka::Duration)>
         impedance_control_callback = [&](const franka::RobotState& robot_state,
                                           franka::Duration duration) -> franka::Torques {
 
-      /** Inizio callback: durante il loop di controllo la callback viene eseguita con una frequenza
-       * di 1Khz. La variabile robot_state viene aggiornata ogni loop con la funzione robot.readOnce() **/
-
+      
       // Update time.
         time += duration.toSec();
         
       // Calcolo delle coppie di Coriolis a partire dal modello dinamico e dallo stato del robot
         std::array<double, 7> coriolis_array = model.coriolis(robot_state);
 
-      // Estrazione dello jacobiano geometrico del manipolatore
+      // Jacobiano geometrico del manipolatore
         std::array<double, 42> jacobian_array = 
         model.zeroJacobian(franka::Frame::kEndEffector, robot_state);
 
-      // Conversione da std::array<double, x > a Eigen 
+      // Conversione a Eigen Map
         Eigen::Map<const Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
         Eigen::Map<const Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
         Eigen::Map<const Eigen::Matrix<double, 7, 1>> q(robot_state.q.data());
         Eigen::Map<const Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
 
-      
-      // Estrazione di posizione e orientamento analoga alla precedente  
+      // Estrazione di posizione e orientamento attuali  
         Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
         Eigen::Vector3d position(transform.translation());
         Eigen::Quaterniond orientation(transform.linear());
@@ -175,45 +191,48 @@ int main(int argc, char** argv) {
       
       // Calcolo errore in orientamento:
         if (orientation_d.coeffs().dot(orientation.coeffs()) < 0.0) {
-            // se il prodotto scalare tra i quaternioni è negativo si inverte
-            // il segno del quaternione attuale
             orientation.coeffs() << -orientation.coeffs();
         }
 
         Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d);
         error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
 
-      // Riporto dell'errore in terna base
         error.tail(3) << -transform.linear() * error.tail(3);
 
-      
       // Costruzione delle coppie di controllo
         Eigen::VectorXd tau_task(7), tau_d(7);
 
-      
       // L'errore è stato definito con il segno opposto quindi serve invertire i segni.
         tau_task << jacobian.transpose() * (-rigidezza * error - smorzamento * (jacobian * dq));
         
         
-      // Salvataggio dei dati
-        Eigen::Matrix<double, 7, 1> tau_measured(robot_state.tau_J.data());
+      // Salvataggio dello stato del robot attuale
+        
+        sv.error = error;
+        sv.pose = posquat2mat(position,orientation);
+        sv.tau_measured = (Eigen::Matrix<double, 7, 1>) robot_state.tau_J.data();
+        sv.q = q;
+        sv.qdot = dq;
 
-
+      // Si lanciano due thread che bufferizzano i dati raccolti
+        sv.fill_buffer();
+        
       // Compensazione delle coppie di Coriolis
         tau_d << tau_task + coriolis;
 
         std::array<double, 7> tau_d_array{};
         Eigen::VectorXd::Map(&tau_d_array[0], 7) = tau_d;
 
-        
-        //sv.wait_filler();
+      // Si attende che i thread terminino la scrittura nei buffer
+        sv.wait_filler();
         
         if (time >= t_fin) {
           franka::Torques tau_m = tau_d_array;
-          std::cout << std::endl << " Fine controllo" << std::endl;
+          std::cout << std::endl << "Fine controllo di impedenza" << std::endl;
           return franka::MotionFinished(tau_m);
         }      
         return tau_d_array;
+
         };
 
       
@@ -222,7 +241,7 @@ int main(int argc, char** argv) {
 
 
       // Scrittura su file
-        // sv.scrivi_su_file();
+         sv.scrivi_su_file(ncampioni);
 
       // Free memory
         for(int i = 0; i< fs*t_fin*7; i++)
@@ -232,10 +251,6 @@ int main(int argc, char** argv) {
         for(int i = 0; i< fs*t_fin*6; i++)
             delete[] buffer_6[i];
         delete[] buffer_6;
-
-
-
-
 
       } catch (const franka::Exception& ex) {
           // print exception
