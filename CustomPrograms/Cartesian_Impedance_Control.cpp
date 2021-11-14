@@ -37,7 +37,7 @@ double** buffer_6;
  * E' stato realizzato un controllo di tipo PD con compensazione di gravità in cui la posa 
  * desiderata è pari alla posa iniziale del robot.
  * 
- * Nota: l'orientamento è espresso in termini di quaternioni unitari.
+ * Nota: l'orientamento dell'EndEffector rispetto alla terna base è espresso attraverso quaternione unitario.
  * Nota: il Panda Robot compensa da se le coppie gravitazionali e gli attriti quindi non è 
  * necessario compensare le coppie gravitazionali. Inoltre, l'esempio prevede la compensazione 
  * delle coppie di Coriolis e Centrifughe. 

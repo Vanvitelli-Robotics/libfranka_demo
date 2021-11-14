@@ -34,6 +34,8 @@
  * per lo sviluppo di un algoritmo di controllo. Per avere un riscontro pratico si consiglia di
  * leggere il programma "Cartesian_Impedance_Control" nella cartella CustomPrograms così come
  * tutti gli esempi della cartella examples. 
+ * Nota2: il Panda Robot compensa da se le coppie gravitazionali e gli attriti quindi non vanno considerati nel modello. 
+ * 
  */
 
 
@@ -45,6 +47,9 @@ int main(int argc, char** argv) {
     }
 
     try {
+      // Documentazione classe franka::Robot https://frankaemika.github.io/libfranka/classfranka_1_1Robot.html
+      // Documentazione classe franka::Model: https://frankaemika.github.io/libfranka/classfranka_1_1Model.html
+      // Documentazione classe franka::RobotState: https://frankaemika.github.io/libfranka/structfranka_1_1RobotState.html
 
       // Connessione al robot 
         franka::Robot robot(argv[1]);
@@ -52,15 +57,13 @@ int main(int argc, char** argv) {
       // Set collision behavior (https://frankaemika.github.io/libfranka/classfranka_1_1Robot.html#a168e1214ac36d74ac64f894332b84534)
         setDefaultBehavior(robot);
 
-      // Documentazione classe franka::Robot https://frankaemika.github.io/libfranka/classfranka_1_1Robot.html
-      
-      // Modello cinematico e dinamico del robot: 
+      // Modello cinematico e dinamico del robot
         franka::Model model = robot.loadModel();
 
-      // Lettura dello stato attuale del robot:
+      // Lettura dello stato attuale del robot
         franka::RobotState initial_state = robot.readOnce();
 
-      // Documentazione franka::RobotState https://frankaemika.github.io/libfranka/structfranka_1_1RobotState.html
+      
       
       // A partire da una variabile robot_state si possono ottenere diverse informazioni, tra cui:
       // initial_state.O_T_EE è la matrice di trasformazione omogenea che descrive la posa 
@@ -80,25 +83,31 @@ int main(int argc, char** argv) {
       // Definizione della callback per il loop di controllo in coppia:
       // L'esempio definisce una lambda function ma nulla vieta di creare una funzione esterna. 
       
-        auto generic_callback = [&](const franka::RobotState& robot_state,
-                                          franka::Duration duration) -> franka::Torques {
+        auto generic_callback = [&](const franka::RobotState& robot_state,franka::Duration duration) -> franka::Torques {
 
       /** Inizio callback: durante il loop di controllo la callback viene eseguita con una frequenza
-       * di 1Khz. La variabile robot_state viene aggiornata ogni loop con la funzione robot.readOnce() **/
+       * di 1Khz. La variabile robot_state viene implicitamente aggiornata ogni loop con la funzione robot.readOnce() **/
       
-      // Update time.
+      // Update time: https://frankaemika.github.io/libfranka/classfranka_1_1Duration.html
         time += duration.toSec();
       
-      // Calcolo coppie di controllo di controllo
-        Eigen::VectorXd tau_task(7), tau_d(7);
-        std::array<double, 7> tau_d_array{};
-        Eigen::VectorXd::Map(&tau_d_array[0], 7) = tau_d;
+      
+        Eigen::VectorXd  tau_des(7);
+
+        // Calcolo 
+        // coppie
+        // di 
+        // controllo
+
+        std::array<double, 7> tau_des_array{};
+        Eigen::VectorXd::Map(&tau_des_array[0], 7) = tau_des;
 
 
-        return tau_d_array;
+        return tau_des_array;
         };
 
-      // Avvio del loop di controllo 
+      // Avvio del loop di controllo:
+      // Doc: https://frankaemika.github.io/libfranka/classfranka_1_1Robot.html#a5b5ba0a4f2bfd20be963b05622e629e1
         robot.control(generic_callback);
 
       } catch (const franka::Exception& ex) {

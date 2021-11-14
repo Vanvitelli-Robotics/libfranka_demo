@@ -16,7 +16,6 @@ void StateSaver::fill_buffer(){
         s2 = std::thread(fill_buffer_7);
 }
 
-
 void StateSaver::wait_filler(){
         s1.join();
         s2.join();

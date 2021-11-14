@@ -16,11 +16,11 @@ add_subdirectory(CustomLibrary)
 # Lista dei programmi da compilare: 
 set(CUSTOMPROGRAMS
 
-EigenExamples
-#TorqueControlGeneric
+TorqueControlGeneric
 Cartesian_Impedance_Control
+Cartesian_Force_Impedance_Control
 
-# Programmi che vuoi compilare
+# Aggiungi qui il programma che vuoi compilare
 
 )
 
@@ -36,7 +36,6 @@ foreach(custom ${CUSTOMPROGRAMS})
   
 endforeach()
 
-# Link manuale: 
-#target_link_libraries(Cartesian_Impedance_Control FillBuffer)
+
 
 
