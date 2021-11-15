@@ -36,6 +36,9 @@
  * tutti gli esempi della cartella examples. 
  * Nota2: il Panda Robot compensa da se le coppie gravitazionali e gli attriti quindi non vanno considerati nel modello. 
  * 
+ * Nota3: la documentazione della libreria Eigen3 è reperibile al link https://eigen.tuxfamily.org/dox/. 
+ * Se si è familiari con l'utilizzo del Matlab si consiglia di dare uno sguardo al seguente cheat sheet:
+ * https://eigen.tuxfamily.org/dox/AsciiQuickReference.txt 
  */
 
 
