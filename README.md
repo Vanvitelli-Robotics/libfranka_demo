@@ -13,18 +13,18 @@ Nota: se si desidera utilizzare l'ultima versione di libfranka serve clonare la 
 2. Compilare il codice:
     1. Installare le dipendenze: 
         >sudo apt install build-essential cmake libpoco-dev libeigen3-dev
-    2. Portarsi nella cartella PandaPrograms:
-        >cd path/to/PandaPrograms
-    4. Creare la cartella build:
+    
+    2. Nella directory PandaPrograms creare la cartella build:
         >mkdir build
 
-    5. Creare il makefile:
+    3. Creare i makefile:
         >cd ./build
-        >cmake ????
-    6. Build: 
-        >cd ./build && cmake --build . 
+        >cmake ..
+
+    4. Compilare: 
+        >make
     
-3. Setup del real-time kernel: [guida patch real-time kernel](https://frankaemika.github.io/docs/installation_linux.html#setting-up-the-real-time-kernel). In data 10 Novembre la patch real-time è già installata sul computer "robo-lab" del laboratorio.
+3. Setup del real-time kernel: [guida patch real-time kernel](https://frankaemika.github.io/docs/installation_linux.html#setting-up-the-real-time-kernel). In data 10 Novembre la patch real-time è già installata sul computer "asusrobot" del laboratorio.
 
 4. Configurare la connessione con il robot: [guida setup network connection](https://frankaemika.github.io/docs/getting_started.html#setting-up-the-network)
 
@@ -60,7 +60,7 @@ Per compilare e lanciare un programma serve:
     - Se è stata scritta una libreria nella directory CustomLibrary è necessario modificare il CMakeLists.txt della directory CustomLibrary in modo che tale libreria sia compilata. Solo una volta fatto questo passaggio la libreria può essere linkata al programma C++ che implementa l'algoritmo di controllo. 
 
 3. Una volta modificati i file CMakeLists.txt è sufficiente eseguire:
-    >cd /path/to/PandaPrograms/build
+    >cd /path/to/PandaPrograms/build/CustomPrograms
     >make
 
 4. Per lanciare il file eseguibile:
