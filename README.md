@@ -15,10 +15,10 @@ Nota: se si desidera utilizzare l'ultima versione di libfranka serve clonare la 
         >sudo apt install build-essential cmake libpoco-dev libeigen3-dev
     
     2. Nella directory PandaPrograms creare la cartella build:
-        >mkdir build
-
+        >mkdir build    
+        >cd build 
+        
     3. Creare i makefile:
-        >cd ./build
         >cmake ..
 
     4. Compilare: 
