@@ -8,9 +8,14 @@ In particolare, gli step sono:
 1. Clonare la repository PandaPrograms del laboratorio :     
    >git clone https://github.com/Vanvitelli-Robotics/libfranka_demo.git
 
+    
+2. Setup del real-time kernel: [guida patch real-time kernel](https://frankaemika.github.io/docs/installation_linux.html#setting-up-the-real-time-kernel). In data 10 Novembre la patch real-time è già installata sul computer "asusrobot" del laboratorio.
+
+3. Configurare la connessione con il robot: [guida setup network connection](https://frankaemika.github.io/docs/getting_started.html#setting-up-the-network)
+
 Nota: se si desidera utilizzare l'ultima versione di libfranka serve clonare la repo di github indicata nella [guida setup libfranka](https://frankaemika.github.io/docs/installation_linux.html#building-libfranka). 
     
-2. Compilare il codice:
+4. Compilare il codice:
     1. Installare le dipendenze: 
         >sudo apt install build-essential cmake libpoco-dev libeigen3-dev
     
@@ -23,10 +28,6 @@ Nota: se si desidera utilizzare l'ultima versione di libfranka serve clonare la 
 
     4. Compilare: 
         >make
-    
-3. Setup del real-time kernel: [guida patch real-time kernel](https://frankaemika.github.io/docs/installation_linux.html#setting-up-the-real-time-kernel). In data 10 Novembre la patch real-time è già installata sul computer "asusrobot" del laboratorio.
-
-4. Configurare la connessione con il robot: [guida setup network connection](https://frankaemika.github.io/docs/getting_started.html#setting-up-the-network)
 
 5. Leggere il pdf "Manuale_Panda" scritto dal collega Vetrella. 
 
