@@ -6,7 +6,7 @@ La guida al setup del Panda robot fornita dalla Franka Emika è piuttosto esaust
 In particolare, gli step sono: 
 
 1. Clonare la repository PandaPrograms del laboratorio :     
-   >git clone "url_repo_lab"
+   >git clone https://github.com/Vanvitelli-Robotics/libfranka_demo.git
 
 Nota: se si desidera utilizzare l'ultima versione di libfranka serve clonare la repo di github indicata nella [guida setup libfranka](https://frankaemika.github.io/docs/installation_linux.html#building-libfranka). 
     
