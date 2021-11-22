@@ -5,21 +5,18 @@ La guida al setup del Panda robot fornita dalla Franka Emika è piuttosto esaust
  
 In particolare, gli step sono: 
 
-1. Clonare la repository PandaPrograms del laboratorio :     
+1. Setup del real-time kernel: [guida patch real-time kernel](https://frankaemika.github.io/docs/installation_linux.html#setting-up-the-real-time-kernel). In data 10 Novembre la patch real-time è già installata sul computer "asusrobot" del laboratorio.
+
+2. Clonare la repository libfranka_demo del laboratorio:     
    >git clone https://github.com/Vanvitelli-Robotics/libfranka_demo.git
-
-    
-2. Setup del real-time kernel: [guida patch real-time kernel](https://frankaemika.github.io/docs/installation_linux.html#setting-up-the-real-time-kernel). In data 10 Novembre la patch real-time è già installata sul computer "asusrobot" del laboratorio.
-
-3. Configurare la connessione con il robot: [guida setup network connection](https://frankaemika.github.io/docs/getting_started.html#setting-up-the-network)
 
 Nota: se si desidera utilizzare l'ultima versione di libfranka serve clonare la repo di github indicata nella [guida setup libfranka](https://frankaemika.github.io/docs/installation_linux.html#building-libfranka). 
     
-4. Compilare il codice:
+3. Compilare il codice:
     1. Installare le dipendenze: 
         >sudo apt install build-essential cmake libpoco-dev libeigen3-dev
     
-    2. Nella directory PandaPrograms creare la cartella build:
+    2. Nella directory libfranka_demo creare la cartella build:
         >mkdir build    
         >cd build 
         
@@ -29,7 +26,10 @@ Nota: se si desidera utilizzare l'ultima versione di libfranka serve clonare la 
     4. Compilare: 
         >make
 
+4. Configurare la connessione con il robot: [guida setup network connection](https://frankaemika.github.io/docs/getting_started.html#setting-up-the-network)
+
 5. Leggere il pdf "Manuale_Panda" scritto dal collega Vetrella. 
+    Nota: L'indirizzo IP del robot è stato settato a 10.224.20.198. Una volta collegato il cavo ethernet, per comunicare con il robot è necessario configurare il proprio indirizzo IP manualmente (ex IP: 10.224.20.197 , Netmask: 255.255.255.252, Gatway 10.224.20.1).    Nota 2: credenziali dell'account per entrare nell'applicazione browser (App Desk): panda - pandarobot. 
 
 
 # Modifiche alla repo libfranka ufficiale
@@ -40,7 +40,7 @@ Cosa cambia tra la repo appena clonata e quella ufficiale di libfranka? Con rife
 
  2. E' stato aggiunto e configurato il CMakeList.txt della directory CustomPrograms. Il file è necessario per compilare i programmi C++ realizzati dallo studente. Ogni programma C++ che si vuole compilare va dichiarato nel CMakeLists.txt. E' consigliato rifarsi alla documentazione ufficiale di cmake per chiarimenti sul file. 
 
- 3. E' stato modificato il root CMakeList.txt (CMakeList.txt contenuto in PandaPrograms). Il root CMakeLists.txt è stato modificato in modo da includere CustomPrograms tra le subdirectory da buildare.
+ 3. E' stato modificato il root CMakeList.txt (CMakeList.txt contenuto in libfranka_demo). Il root CMakeLists.txt è stato modificato in modo da includere CustomPrograms tra le subdirectory da buildare.
 
  4. E' stata creata la subdirectory CustomLibrary. La directory CustomLibraries è pensata per contenere eventuali librerie C++ scritte dallo studente. All'interno della directory è stato inserito un esempio utile a capire come configurare il CMakeLists.txt (libreria StateSaver).
 
@@ -61,11 +61,11 @@ Per compilare e lanciare un programma serve:
     - Se è stata scritta una libreria nella directory CustomLibrary è necessario modificare il CMakeLists.txt della directory CustomLibrary in modo che tale libreria sia compilata. Solo una volta fatto questo passaggio la libreria può essere linkata al programma C++ che implementa l'algoritmo di controllo. 
 
 3. Una volta modificati i file CMakeLists.txt è sufficiente eseguire:
-    >cd /path/to/PandaPrograms/build/CustomPrograms
+    >cd /path/to/libfranka_demo/build/CustomPrograms
     >make
 
 4. Per lanciare il file eseguibile:
-    >cd /path/to/PandaPrograms/build/CustomPrograms     
+    >cd /path/to/libfranka_demo/build/CustomPrograms     
     >./nomefile ip_robot.
 
 
