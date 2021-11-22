@@ -19,6 +19,7 @@ set(CUSTOMPROGRAMS
 TorqueControlGeneric
 Cartesian_Impedance_Control
 Cartesian_Force_Impedance_Control
+UtilizzoStateSaver
 
 # Aggiungi qui il programma che vuoi compilare
 

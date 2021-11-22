@@ -28,8 +28,7 @@ const int t_fin = 20; // 20 s
 const int fs = 1000; // 1 KHz
 const int ncampioni = t_fin*fs; 
 
-double** buffer_7; 
-double** buffer_6;  
+
 
 /**
  * Esempio programma C++ per il controllo in coppia del robot Panda. 
@@ -58,24 +57,22 @@ double** buffer_6;
 // Funzione per compattare posizione e quaternione sotto un unico vettore posa 7x1
 Eigen::Matrix<double,7,1> posquat2mat(const Eigen::Vector3d& position, const Eigen::Quaterniond quaternion){
     
-    Eigen::Matrix<double,7,1> mat;
-    mat(0,0) = position(0);
-    mat(1,0) = position(1);
-    mat(2,0) = position(2);
-    mat(3,0) = quaternion.w();
-    mat(4,0) = quaternion.x();
-    mat(5,0) = quaternion.y();
-    mat(6,0) = quaternion.z();
+    Eigen::Matrix<double,7,1> pose;
+    pose(0,0) = position(0);
+    pose(1,0) = position(1);
+    pose(2,0) = position(2);
+    pose(3,0) = quaternion.w();
+    pose(4,0) = quaternion.x();
+    pose(5,0) = quaternion.y();
+    pose(6,0) = quaternion.z();
     
-    
-
-    return mat;
+    return pose;
 }
 
 
 // Per utilizzare le variabili static della classe StateSaver serve istanziarle fuori dal main
-  double** StateSaver::buffer_6;
-  double** StateSaver::buffer_7; 
+  double** StateSaver::buffer_6 = nullptr;
+  double** StateSaver::buffer_7 = nullptr; 
 
   Eigen::Matrix<double, 6, 1> StateSaver::error;
   Eigen::Matrix<double,7,1> StateSaver::tau_measured;
@@ -118,14 +115,14 @@ int main(int argc, char** argv) {
       
 
       // Inizializzazione oggetto StateSaver per salvare su file
-        buffer_7 = new double*[fs * t_fin * 7];
-        buffer_6 = new double*[fs * t_fin * 6];
+        StateSaver::buffer_7 = new double*[ncampioni* 7];
+        StateSaver::buffer_6 = new double*[ncampioni * 6];
 
-        for(int i = 0; i< fs*t_fin*7; i++)
-            buffer_7[i] = new double[5]; // tau_m, q, dq, pose, pose_dot
+        for(int i = 0; i< ncampioni * 7; i++)
+            StateSaver::buffer_7[i] = new double[lenght_buffer7]; // tau_m, q, dq, pose, pose_dot
         
-        for(int i = 0; i< fs*t_fin*7; i++)
-            buffer_7[i] = new double[6]; // error
+        for(int i = 0; i< ncampioni * 6; i++)
+            StateSaver::buffer_6[i] = new double[lenght_buffer6]; // error
 
         StateSaver sv;
 
@@ -207,12 +204,16 @@ int main(int argc, char** argv) {
         
         
       // Salvataggio dello stato del robot attuale
-        
-        sv.error = error;
-        sv.pose = posquat2mat(position,orientation);
+      
         sv.tau_measured = (Eigen::Matrix<double, 7, 1>) robot_state.tau_J.data();
         sv.q = q;
         sv.qdot = dq;
+        sv.pose = posquat2mat(position,orientation);
+        sv.error = error;
+        
+        
+        
+        
 
       // Si lanciano due thread che bufferizzano i dati raccolti
         sv.fill_buffer();
@@ -244,13 +245,13 @@ int main(int argc, char** argv) {
          sv.scrivi_su_file(ncampioni);
 
       // Free memory
-        for(int i = 0; i< fs*t_fin*7; i++)
-            delete[] buffer_7[i];
-        delete[] buffer_7;
+        for(int i = 0; i< ncampioni*7; i++)
+            delete[] StateSaver::buffer_7[i];
+        delete[] StateSaver::buffer_7;
 
-        for(int i = 0; i< fs*t_fin*6; i++)
-            delete[] buffer_6[i];
-        delete[] buffer_6;
+        for(int i = 0; i< ncampioni*6; i++)
+            delete[] StateSaver::buffer_6[i];
+        delete[] StateSaver::buffer_6;
 
       } catch (const franka::Exception& ex) {
           // print exception

@@ -17,13 +17,16 @@ void StateSaver::fill_buffer(){
 }
 
 void StateSaver::wait_filler(){
+      
         s1.join();
         s2.join();
 }
 
 void StateSaver::scrivi_su_file(int ncampioni){
-        char *path1 = "../../robot_state/model_7.txt";
-        char *path2 = "../../robot_state/model_6.txt";
+        char *path1 = "../Risultati/model_7_test.txt";
+        char *path2 = "../Risultati/model_6_test.txt";
+        std::cout << "Scrivo su file model_7\n";
+        std::cout << "Scrivo su file model_6\n";
         std::ofstream File7(path1);
         std::ofstream File6(path2);
 
@@ -51,7 +54,7 @@ void StateSaver::fill_buffer_7(){
 
         static int x = 0;
 
-         for(int i = 0; i < lenght_buffer7; i++) {
+         for(int i = 0; i < 7; i++) {
              buffer_7[x+i][0] = StateSaver::tau_measured[i]; 
              buffer_7[x+i][1] = StateSaver::q[i]; 
              buffer_7[x+i][2] = StateSaver::qdot[i]; 

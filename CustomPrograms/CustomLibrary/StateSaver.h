@@ -26,7 +26,7 @@ public:
         static Eigen::Matrix<double,7,1> tau_measured;
         static Eigen::Matrix<double,7,1> q;
         static Eigen::Matrix<double, 7, 1> qdot;
-        static Eigen::Matrix<double, 7, 1> pose;
+        static Eigen::Matrix<double, 7, 1> pose; // posizione + quaternione
 
     // Dati di dimensione 6
         static Eigen::Matrix<double, 6, 1> error;
@@ -37,7 +37,7 @@ public:
     static void scrivi_su_file(int ncampioni);
     static void fill_buffer_7();
     static void fill_buffer_6();
-    static void ciao();
+
 
 };
 
